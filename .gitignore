@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# 環境変数 (APIキーなど)
+.env
+*.env
+
+# データ・ログ
+data/
+logs/
+*.db
+*.sqlite
+
+# 一時ファイル
+tmp/
+*.tmp
+/tmp/tiktok_*
+
+# エディタ
+.DS_Store
+.idea/
+.vscode/
+*.swp

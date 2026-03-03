@@ -1,0 +1,50 @@
+# Iran_ocint — OSINT Trend Monitoring & Analysis System
+# Python 3.11+
+
+# --- Twitter / Data Collection ---
+twikit==2.3.1
+tweepy==4.14.0
+feedparser==6.0.11
+aiohttp==3.11.13
+
+# --- TikTok Collection ---
+# TikTokApi は Playwright を内部使用するため playwright も必要
+# インストール後: playwright install chromium
+TikTokApi>=7.3.1
+playwright>=1.44.0
+
+# --- TikTok FYP ブラウザ + 動画 AI 分析 ---
+yt-dlp>=2026.2.0          # TikTok 動画ダウンロード
+google-genai>=1.0.0       # Gemini API (動画理解・説明)
+
+# --- Instagram Collection ---
+instagrapi==2.1.3
+# 2FA 使用時は pyotp も追加
+# pyotp>=2.9.0
+
+# --- LLM Providers ---
+openai==1.66.3
+anthropic==0.49.0
+
+# --- Database ---
+sqlalchemy==2.0.38
+aiosqlite==0.21.0
+
+# --- Notifications ---
+slack_sdk==3.34.0
+jinja2==3.1.5
+
+# --- Scheduling ---
+apscheduler==3.11.0
+
+# --- Configuration / Validation ---
+pydantic==2.10.6
+pydantic-settings==2.8.1
+pyyaml==6.0.2
+python-dotenv==1.0.1
+
+# --- Logging ---
+structlog==25.1.0
+
+# --- Utilities ---
+aiolimiter==1.2.1

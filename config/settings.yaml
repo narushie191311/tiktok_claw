@@ -1,0 +1,77 @@
+# Iran_ocint — メイン設定ファイル
+# 環境変数(.env)で上書き可能な項目は env: で示す
+
+app:
+  name: Iran_ocint
+  version: "0.1.0"
+  timezone: "Asia/Tokyo"      # env: TIMEZONE
+
+# --- データ収集 ---
+collector:
+  # Twitter バックエンド: "twikit" | "tweepy" | "both" (twikit優先でfallback)
+  twitter_backend: twikit
+  collect_interval_minutes: 15  # env: COLLECT_INTERVAL_MINUTES
+  max_tweets_per_query: 100
+  rss_enabled: true
+
+  # TikTok コレクター設定
+  # 認証: 環境変数 TIKTOK_MS_TOKEN (省略可、匿名でも動作するが安定性が上がる)
+  tiktok_enabled: false         # env: TIKTOK_ENABLED
+  tiktok_max_per_tag: 30        # ハッシュタグあたりの最大取得動画数
+  tiktok_fetch_trending: true   # グローバルトレンド動画も取得するか
+
+  # Instagram コレクター設定
+  # 認証: 環境変数 INSTAGRAM_USERNAME / INSTAGRAM_PASSWORD
+  # セッション再利用: INSTAGRAM_SESSION_FILE (デフォルト: Iran_ocint/data/instagram_session.json)
+  instagram_enabled: false      # env: INSTAGRAM_ENABLED
+  instagram_max_per_tag: 50     # ハッシュタグあたりの最大取得投稿数
+
+# --- LLM ---
+llm:
+  # "openai" | "anthropic" | "ollama"
+  provider: openai              # env: LLM_PROVIDER
+  openai:
+    model: gpt-4o-mini
+    temperature: 0.2
+    max_tokens: 4096
+  anthropic:
+    model: claude-sonnet-4-20250514
+    temperature: 0.2
+    max_tokens: 4096
+  ollama:
+    model: llama3.1:8b
+    base_url: "http://localhost:11434"
+
+# --- データベース ---
+database:
+  url: "sqlite+aiosqlite:///Iran_ocint/data/ocint.db"
+
+# --- 通知 ---
+notifications:
+  slack:
+    enabled: true
+  email:
+    enabled: true
+    smtp_port: 587
+    use_tls: true
+
+# --- イベント検知 ---
+event_detection:
+  # 頻度スパイク: 直近1hのツイート数が過去24h平均の N*σ を超えたらアラート
+  spike_sigma_threshold: 3.0
+  # LLMトリアージの重大度閾値 (0.0 ~ 1.0)
+  severity_threshold: 0.7
+  # 同一イベントの重複アラート抑制 (分)
+  dedup_window_minutes: 60
+
+# --- デイリーレポート ---
+daily_report:
+  time: "09:00"                # env: DAILY_REPORT_TIME
+  top_tweets_count: 10
+  include_sentiment_chart: true
+
+# --- ログ ---
+logging:
+  level: INFO
+  format: json
+  file: "Iran_ocint/logs/ocint.log"

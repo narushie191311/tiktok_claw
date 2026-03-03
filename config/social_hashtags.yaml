@@ -1,0 +1,66 @@
+# social_hashtags.yaml — TikTok / Instagram 収集用ハッシュタグ設定
+#
+# settings.yaml の tiktok_enabled / instagram_enabled を true にした際に
+# このファイルのタグが収集対象となる。
+#
+# ユースケース別にセクションを分けて管理する。
+# 各タグは # 不要 (コレクター側で自動除去)。
+
+# --- 一般トレンド監視 ---
+trending_general:
+  - viral
+  - trending
+  - fyp
+  - foryoupage
+  - breakingnews
+  - news
+
+# --- テクノロジー ---
+technology:
+  - ai
+  - chatgpt
+  - artificialintelligence
+  - machinelearning
+  - tech
+  - openai
+  - llm
+  - chatbot
+  - robotics
+  - deeplearning
+
+# --- ビジネス / 経済 ---
+business:
+  - investing
+  - stocks
+  - crypto
+  - bitcoin
+  - economy
+  - finance
+  - startup
+  - entrepreneur
+  - businessnews
+
+# --- 文化 / エンタメ ---
+culture:
+  - fashion
+  - beauty
+  - music
+  - dance
+  - meme
+  - challenge
+  - lifestyle
+  - food
+  - travel
+
+# --- ニュース / 時事 ---
+news:
+  - worldnews
+  - politics
+  - geopolitics
+  - conflict
+  - election
+  - climate
+  - environment
+
+# --- カスタム監視対象 (ユーザーが自由に追加) ---
+custom: []

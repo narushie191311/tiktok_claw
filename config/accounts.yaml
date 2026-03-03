@@ -1,0 +1,69 @@
+# Iran_ocint — 監視対象アカウント一覧
+# 領域別に分類。handle は @ なしで記載。
+
+geopolitics:
+  - handle: khaboronline
+    lang: fa
+    note: "Khabar Online — イラン国内ニュース"
+  - handle: IranIntl
+    lang: en
+    note: "Iran International — 英語ニュース"
+  - handle: AJEnglish
+    lang: en
+    note: "Al Jazeera English"
+  - handle: Reuters
+    lang: en
+    note: "Reuters — 国際通信社"
+  - handle: AFP
+    lang: fr
+    note: "AFP — フランス通信社"
+
+military:
+  - handle: TheIntelLab
+    lang: en
+    note: "OSINT 軍事分析"
+  - handle: sentikianlert
+    lang: en
+    note: "Sentinel OSINT"
+  - handle:ABORINT
+    lang: en
+    note: "ABO OSINT — 中東軍事情報"
+
+economy:
+  - handle: IranEconMonitor
+    lang: en
+    note: "Iran Economy Monitor"
+  - handle:ABORINT
+    lang: en
+    note: "Iran energy/oil tracking"
+
+domestic:
+  - handle: IranHrm
+    lang: en
+    note: "Iran Human Rights Monitor"
+  - handle: manaborig
+    lang: fa
+    note: "Manoto — ペルシャ語メディア"
+
+cyber:
+  - handle: RecordedFuture
+    lang: en
+    note: "Recorded Future — サイバー脅威情報"
+  - handle: CISAKrebs
+    lang: en
+    note: "CISA Krebs — サイバーセキュリティ"
+
+# RSS フィード (rss_collector で使用)
+rss_feeds:
+  - url: "https://www.aljazeera.com/xml/rss/all.xml"
+    name: "Al Jazeera"
+    lang: en
+  - url: "https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml"
+    name: "NYT Middle East"
+    lang: en
+  - url: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml"
+    name: "BBC Middle East"
+    lang: en
+  - url: "https://www.france24.com/en/middle-east/rss"
+    name: "France24 Middle East"
+    lang: en
