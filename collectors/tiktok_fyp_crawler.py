@@ -706,13 +706,9 @@ URL: {url}
 
             except ClientError as e:
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    log.warning(
-                        "gemini_rate_limit",
-                        model=model_name,
-                        fallback=models_to_try[models_to_try.index(model_name) + 1]
-                        if model_name != models_to_try[-1]
-                        else "none",
-                    )
+                    _idx = models_to_try.index(model_name)
+                    _next = models_to_try[_idx + 1] if _idx + 1 < len(models_to_try) else "none"
+                    log.warning("gemini_rate_limit", model=model_name, fallback=_next)
                     await asyncio.sleep(2)
                     continue
                 return {"error": str(e), "_model_used": model_name}
