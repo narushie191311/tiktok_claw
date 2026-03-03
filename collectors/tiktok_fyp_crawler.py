@@ -257,26 +257,42 @@ class TikTokFYPCrawler:
         except Exception:
             pass
 
+        # 全スクロール分の DOM 動画を蓄積するリスト
+        all_dom_videos: list[FYPVideo] = []
+
         # スクロールして動画を収集
         for i in range(scroll_count):
             await asyncio.sleep(wait_between)
 
-            # DOM から動画リンクを収集
-            dom_videos = await self._extract_from_dom()
+            # DOM から動画リンクを収集 (各スクロールで新規分のみ返る)
+            new_dom = await self._extract_from_dom()
+            all_dom_videos.extend(new_dom)
             log.info(
                 "fyp_scroll",
                 scroll=i + 1,
-                dom_videos=len(dom_videos),
+                dom_new=len(new_dom),
+                dom_total=len(all_dom_videos),
                 api_buffered=len(self._api_buffer),
             )
 
             # ページをスクロール
             await self._page.evaluate(f"window.scrollBy(0, {_SCROLL_AMOUNT_PX})")
 
-        # APIバッファからも動画を生成
+        # APIバッファからも動画を生成 (DOM で取得できなかった統計情報を補完)
         api_videos = self._parse_api_buffer()
 
-        all_videos = list({v.video_id: v for v in (dom_videos + api_videos)}.values())
+        # API データを優先して DOM データとマージ (API の方がスタッツが正確)
+        api_map = {v.video_id: v for v in api_videos}
+        merged: list[FYPVideo] = []
+        seen: set[str] = set()
+        for v in all_dom_videos + api_videos:
+            if v.video_id in seen:
+                continue
+            seen.add(v.video_id)
+            # DOM 動画は API データで上書き (スタッツが正確)
+            merged.append(api_map.get(v.video_id, v))
+
+        all_videos = merged
 
         jp_count = sum(1 for v in all_videos if v.is_japanese())
 
@@ -312,7 +328,7 @@ class TikTokFYPCrawler:
                     const links = document.querySelectorAll('a[href*="/video/"]');
                     links.forEach(link => {
                         const href = link.href || '';
-                        const match = href.match(/@([^/]+)[/]video[/]([0-9]+)[/]/);
+                        const match = href.match(/@([^/]+)[/]video[/]([0-9]+)/);
                         if (!match) return;
                         
                         const [, handle, videoId] = match;
@@ -372,16 +388,20 @@ class TikTokFYPCrawler:
     def _parse_api_buffer(self) -> list[FYPVideo]:
         """インターセプトした API レスポンスバッファをパースする.
 
+        DOM 取得済みのものも含めて全件返す。
+        呼び出し側でマージ・重複排除を行うため、ここでは _collected_ids を参照しない。
+
         Returns:
             FYPVideo のリスト.
         """
         results: list[FYPVideo] = []
+        seen_in_buffer: set[str] = set()
         for item in self._api_buffer:
             try:
                 vid_id = str(item.get("id", ""))
-                if not vid_id or vid_id in self._collected_ids:
+                if not vid_id or vid_id in seen_in_buffer:
                     continue
-                self._collected_ids.add(vid_id)
+                seen_in_buffer.add(vid_id)
 
                 author = item.get("author", {}) or {}
                 stats = item.get("stats", {}) or {}
