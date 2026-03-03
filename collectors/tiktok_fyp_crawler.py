@@ -110,10 +110,11 @@ class FYPVideo:
 
         判定優先順位:
         1. API の region_code == "JP" (投稿者が日本在住)
-        2. キャプションにひらがな/カタカナが含まれる (日本語固有文字)
+        2. ハッシュタグを除いたキャプションにひらがな/カタカナが含まれる
 
-        ※ CJK漢字 (0x4E00-0x9FFF) は中国語・韓国語でも共有されるため単独では使用しない。
-          ひらがな・カタカナが含まれる場合のみ日本語と判断する。
+        ※ CJK漢字は中国語・韓国語でも共有されるため使用しない。
+        ※ #fypシ のようなタグは世界中の非日本語クリエイターが使うため、
+          ハッシュタグ内の文字は判定から除外する。
 
         Returns:
             日本語コンテンツと判定された場合 True.
@@ -121,8 +122,10 @@ class FYPVideo:
         # API のリージョン情報を最優先 (投稿者アカウントの登録国)
         if self.region_code == "JP":
             return True
-        # ひらがな/カタカナで判定 (これらは日本語固有で中国語・韓国語には存在しない)
-        for char in self.description:
+        # ハッシュタグを除去してからひらがな/カタカナで判定
+        # (#fypシ など非日本語クリエイターが使うタグの誤検知を防ぐ)
+        text_without_tags = re.sub(r"#\S+", "", self.description)
+        for char in text_without_tags:
             cp = ord(char)
             if 0x3040 <= cp <= 0x309F or 0x30A0 <= cp <= 0x30FF:  # ひらがな or カタカナ
                 return True
