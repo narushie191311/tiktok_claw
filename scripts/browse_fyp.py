@@ -33,14 +33,14 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-from Iran_ocint.collectors.tiktok_fyp_crawler import FYPVideo, TikTokFYPCrawler, VideoAnalyzer
-from Iran_ocint.utils.logger import get_logger
-from Iran_ocint.utils.slack_notifier import SlackNotifier
+from collectors.tiktok_fyp_crawler import FYPVideo, TikTokFYPCrawler, VideoAnalyzer
+from utils.logger import get_logger
+from utils.slack_notifier import SlackNotifier
 
 log = get_logger("browse_fyp")
 

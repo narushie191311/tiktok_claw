@@ -21,10 +21,10 @@ import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
-from Iran_ocint.utils.logger import get_logger
+from utils.logger import get_logger
 
 if TYPE_CHECKING:
-    from Iran_ocint.collectors.tiktok_fyp_crawler import FYPVideo
+    from collectors.tiktok_fyp_crawler import FYPVideo
 
 log = get_logger(__name__)
 

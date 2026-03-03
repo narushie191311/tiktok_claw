@@ -35,7 +35,7 @@ from typing import Any
 # JST タイムゾーン (pytz 不要の固定オフセット)
 _JST = timezone(timedelta(hours=9))
 
-from Iran_ocint.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 
