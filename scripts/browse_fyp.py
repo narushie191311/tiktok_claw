@@ -188,6 +188,12 @@ async def run(args: argparse.Namespace) -> None:
     analyzer = VideoAnalyzer()
     crawler = TikTokFYPCrawler()
 
+    # フィルタ前後の件数を追跡 (finally の外で参照するため事前初期化)
+    raw_fyp_count = 0
+    sorted_videos: list = []
+    jp_videos: list = []
+    other_videos: list = []
+
     try:
         print("\n📡 ブラウザ起動中...")
         await crawler.initialize()
@@ -196,29 +202,48 @@ async def run(args: argparse.Namespace) -> None:
         print(f"🔄 TikTok おすすめフィードを {args.scrolls} 回スクロール中...")
         print("   (動画が表示されるまでお待ちください)\n")
 
-        videos = await crawler.crawl_fyp(
+        raw_videos = await crawler.crawl_fyp(
             scroll_count=args.scrolls,
-            language=args.lang,
+            language="all",       # まず全件取得してから自前でフィルタ
             wait_between=args.wait,
         )
+        raw_fyp_count = len(raw_videos)
 
-        if not videos:
+        if not raw_videos:
             print("❌ 動画を取得できませんでした")
             sys.exit(1)
 
-        # 再生数フィルター (ブラウザが開いている間に実行)
-        if args.min_plays > 0:
-            before = len(videos)
-            videos = [v for v in videos if v.play_count >= args.min_plays]
-            print(f"\n🔍 再生数フィルター: {args.min_plays/10000:.0f}万再生以上 → {before}件 → {len(videos)}件")
-            if not videos:
-                print("   該当動画なし (0件)")
-                sys.exit(0)
+        print(f"\n📊 FYP取得: {raw_fyp_count}件")
 
-        # language="ja" 時はすでに日本語のみ、"all" 時は日本語優先ソート済み
+        # 言語フィルター
+        if args.lang == "ja":
+            videos_lang = [v for v in raw_videos if v.is_japanese()]
+            print(f"   言語フィルター (日本語のみ): {raw_fyp_count}件 → {len(videos_lang)}件")
+        else:
+            # 日本語優先ソートのみ (除外しない)
+            jp = [v for v in raw_videos if v.is_japanese()]
+            other = [v for v in raw_videos if not v.is_japanese()]
+            videos_lang = jp + other
+            print(f"   言語フィルター (全言語・日本語優先): 日本語{len(jp)}件 / 他{len(other)}件")
+
+        if not videos_lang:
+            print("   ⚠️ 日本語コンテンツが0件でした (IP地域の影響で海外コンテンツのみの可能性があります)")
+            sys.exit(0)
+
+        # 再生数フィルター
+        if args.min_plays > 0:
+            videos = [v for v in videos_lang if v.play_count >= args.min_plays]
+            print(f"   再生数フィルター ({args.min_plays//10000}万再生以上): {len(videos_lang)}件 → {len(videos)}件")
+            if not videos:
+                print("   該当動画なし (0件) - --min-plays を下げてみてください")
+                sys.exit(0)
+        else:
+            videos = videos_lang
+
+        # 日本語優先でソート (いいね数降順)
         jp_videos = [v for v in videos if v.is_japanese()]
         other_videos = [v for v in videos if not v.is_japanese()]
-        sorted_videos = videos  # crawl_fyp 内でソート済み
+        sorted_videos = jp_videos + other_videos
 
         # ブラウザを使って上位N件のコメントを取得 (ブラウザが開いている間に実行)
         top_n = args.slack_top
@@ -241,8 +266,9 @@ async def run(args: argparse.Namespace) -> None:
             xvfb_proc.terminate()
 
     print(f"\n{'='*72}")
-    print(f"  🇯🇵 TikTok おすすめ収集結果")
-    print(f"  合計 {len(sorted_videos)} 件 | 日本語 {len(jp_videos)} 件 | その他 {len(other_videos)} 件")
+    print(f"  TikTok おすすめ収集結果")
+    print(f"  FYP取得: {raw_fyp_count}件 → フィルタ後: {len(sorted_videos)}件")
+    print(f"  日本語: {len(jp_videos)}件 | その他: {len(other_videos)}件")
     print(f"{'='*72}")
 
     # AI 分析 (上位 N 件)
@@ -275,7 +301,7 @@ async def run(args: argparse.Namespace) -> None:
 
     # サマリー
     print(f"\n{'='*72}")
-    print(f"✅ 合計 {len(sorted_videos)} 件 (日本語 {len(jp_videos)} 件)")
+    print(f"✅ FYP取得: {raw_fyp_count}件 → 日本語: {len(jp_videos)}件 → フィルタ後: {len(sorted_videos)}件")
 
     if sorted_videos:
         top = sorted_videos[0]
@@ -294,6 +320,8 @@ async def run(args: argparse.Namespace) -> None:
             videos=sorted_videos,
             ai_results=ai_results,
             top_n=top_n,
+            raw_fyp_count=raw_fyp_count,
+            min_plays=args.min_plays,
         )
         if ok:
             print("   ✅ Slack 送信完了")

@@ -190,20 +190,40 @@ def _build_header_blocks(
     jp_count: int,
     send_count: int,
     collected_at: datetime,
+    raw_fyp_count: int = 0,
+    min_plays: int = 0,
 ) -> list[dict]:
     """レポートのヘッダーブロックを構築する.
 
     Args:
-        total: 収集合計件数.
+        total: フィルタ後の動画件数 (通知対象).
         jp_count: 日本語コンテンツ件数.
         send_count: Slack に送信する件数.
         collected_at: 収集日時.
+        raw_fyp_count: FYP から収集した生の件数 (フィルタ前).
+        min_plays: 再生数フィルターの閾値 (0=フィルタなし).
 
     Returns:
         Slack Block Kit ブロックのリスト.
     """
-    jst_time = collected_at.astimezone(timezone.utc)
-    time_str = jst_time.strftime("%Y-%m-%d %H:%M UTC")
+    # JST で表示
+    from datetime import timedelta
+    jst = timezone(timedelta(hours=9))
+    jst_time = collected_at.astimezone(jst)
+    time_str = jst_time.strftime("%Y-%m-%d %H:%M JST")
+
+    # フィルタの説明を組み立てる
+    filter_parts = []
+    if min_plays > 0:
+        filter_parts.append(f"{min_plays // 10000}万再生以上")
+    filter_parts.append("日本語のみ")
+    filter_desc = " + ".join(filter_parts)
+
+    # 生件数 → フィルタ後件数の流れを表示
+    if raw_fyp_count > 0:
+        pipeline_text = f"FYP取得: *{raw_fyp_count}件* → フィルタ後: *{total}件*\n_{filter_desc}_"
+    else:
+        pipeline_text = f"フィルタ後: *{total}件*\n_{filter_desc}_"
 
     return [
         {
@@ -215,9 +235,8 @@ def _build_header_blocks(
         },
         {
             "type": "section",
+            "text": {"type": "mrkdwn", "text": pipeline_text},
             "fields": [
-                {"type": "mrkdwn", "text": f"*収集件数:*\n{total} 件"},
-                {"type": "mrkdwn", "text": f"*日本語率:*\n{jp_count}/{total} ({jp_count*100//total if total else 0}%)"},
                 {"type": "mrkdwn", "text": f"*通知件数:*\n上位 {send_count} 件"},
                 {"type": "mrkdwn", "text": f"*収集時刻:*\n{time_str}"},
             ],
@@ -247,6 +266,8 @@ class SlackNotifier:
         videos: list["FYPVideo"],
         ai_results: dict[str, dict[str, Any]],
         top_n: int = 10,
+        raw_fyp_count: int = 0,
+        min_plays: int = 0,
     ) -> bool:
         """FYP 収集結果をトレンドレポートとして Slack に送信する.
 
@@ -256,6 +277,8 @@ class SlackNotifier:
             videos: 収集した FYPVideo のリスト (いいね数降順推奨).
             ai_results: {video_id: Gemini分析結果} の辞書.
             top_n: 送信する上位件数 (default: 10).
+            raw_fyp_count: FYP から収集した生の件数 (フィルタ前). 0 の場合は非表示.
+            min_plays: 再生数フィルターの閾値 (0=フィルタなし).
 
         Returns:
             全メッセージが成功した場合 True.
@@ -274,6 +297,8 @@ class SlackNotifier:
             jp_count=jp_count,
             send_count=len(targets),
             collected_at=collected_at,
+            raw_fyp_count=raw_fyp_count,
+            min_plays=min_plays,
         )
 
         # 各動画のブロック

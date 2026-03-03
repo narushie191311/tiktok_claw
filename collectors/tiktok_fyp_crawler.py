@@ -108,22 +108,23 @@ class FYPVideo:
     def is_japanese(self) -> bool:
         """日本語コンテンツか判定する.
 
-        APIリージョン "JP" を最優先し、次にキャプションのひらがな/カタカナ/漢字で判定する。
+        判定優先順位:
+        1. API の region_code == "JP" (投稿者が日本在住)
+        2. キャプションにひらがな/カタカナが含まれる (日本語固有文字)
+
+        ※ CJK漢字 (0x4E00-0x9FFF) は中国語・韓国語でも共有されるため単独では使用しない。
+          ひらがな・カタカナが含まれる場合のみ日本語と判断する。
 
         Returns:
             日本語コンテンツと判定された場合 True.
         """
-        # API のリージョン情報を最優先 (最も信頼性が高い)
+        # API のリージョン情報を最優先 (投稿者アカウントの登録国)
         if self.region_code == "JP":
             return True
-        # キャプションテキストで判定 (ひらがな・カタカナ・漢字)
+        # ひらがな/カタカナで判定 (これらは日本語固有で中国語・韓国語には存在しない)
         for char in self.description:
             cp = ord(char)
-            if (
-                0x3040 <= cp <= 0x309F   # ひらがな
-                or 0x30A0 <= cp <= 0x30FF  # カタカナ
-                or 0x4E00 <= cp <= 0x9FFF  # CJK漢字
-            ):
+            if 0x3040 <= cp <= 0x309F or 0x30A0 <= cp <= 0x30FF:  # ひらがな or カタカナ
                 return True
         return False
 
