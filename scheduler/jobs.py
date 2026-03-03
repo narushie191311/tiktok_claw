@@ -11,19 +11,19 @@ from pathlib import Path
 
 import yaml
 
-from Iran_ocint.analysis.llm_client import BaseLLMClient, create_llm_client
-from Iran_ocint.analysis.pipeline import run_analysis_pipeline, run_daily_report
-from Iran_ocint.collectors.base import AbstractCollector, CollectedPost
-from Iran_ocint.collectors.instagram_collector import InstagramCollector
-from Iran_ocint.collectors.rss_collector import FeedConfig, RSSCollector
-from Iran_ocint.collectors.tiktok_collector import TikTokCollector
-from Iran_ocint.collectors.twitter_api import TwitterAPICollector
-from Iran_ocint.collectors.twitter_scraper import TwitterScraperCollector
-from Iran_ocint.notifiers.base import AbstractNotifier
-from Iran_ocint.notifiers.email_notifier import EmailNotifier
-from Iran_ocint.notifiers.report_formatter import format_breaking_alert_markdown
-from Iran_ocint.notifiers.slack_notifier import SlackNotifier
-from Iran_ocint.utils.logger import get_logger
+from analysis.llm_client import BaseLLMClient, create_llm_client
+from analysis.pipeline import run_analysis_pipeline, run_daily_report
+from collectors.base import AbstractCollector, CollectedPost
+from collectors.instagram_collector import InstagramCollector
+from collectors.rss_collector import FeedConfig, RSSCollector
+from collectors.tiktok_collector import TikTokCollector
+from collectors.twitter_api import TwitterAPICollector
+from collectors.twitter_scraper import TwitterScraperCollector
+from notifiers.base import AbstractNotifier
+from notifiers.email_notifier import EmailNotifier
+from notifiers.report_formatter import format_breaking_alert_markdown
+from notifiers.slack_notifier import SlackNotifier
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

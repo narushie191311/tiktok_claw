@@ -21,9 +21,9 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-from Iran_ocint.scheduler.jobs import OcintOrchestrator
-from Iran_ocint.storage.database import close_db, init_db
-from Iran_ocint.utils.logger import get_logger, setup_logging
+from scheduler.jobs import OcintOrchestrator
+from storage.database import close_db, init_db
+from utils.logger import get_logger, setup_logging
 
 log = get_logger(__name__)
 

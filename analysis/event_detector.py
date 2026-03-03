@@ -10,9 +10,9 @@ import statistics
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from Iran_ocint.analysis.classifier import ClassificationResult
-from Iran_ocint.analysis.llm_client import BaseLLMClient
-from Iran_ocint.utils.logger import get_logger
+from analysis.classifier import ClassificationResult
+from analysis.llm_client import BaseLLMClient
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

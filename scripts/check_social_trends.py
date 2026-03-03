@@ -31,8 +31,8 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-from Iran_ocint.collectors.base import CollectedPost
-from Iran_ocint.utils.logger import get_logger
+from collectors.base import CollectedPost
+from utils.logger import get_logger
 
 
 def _ensure_display() -> "subprocess.Popen[bytes] | None":
@@ -100,7 +100,7 @@ async def collect_tiktok(tags: list[str], max_per_tag: int) -> list[CollectedPos
         CollectedPost のリスト.
     """
     try:
-        from Iran_ocint.collectors.tiktok_collector import TikTokCollector
+        from collectors.tiktok_collector import TikTokCollector
     except ImportError as e:
         print(f"[ERROR] TikTokCollector をインポートできません: {e}")
         return []
@@ -136,7 +136,7 @@ async def collect_instagram(tags: list[str], max_per_tag: int) -> list[Collected
         CollectedPost のリスト.
     """
     try:
-        from Iran_ocint.collectors.instagram_collector import InstagramCollector
+        from collectors.instagram_collector import InstagramCollector
     except ImportError as e:
         print(f"[ERROR] InstagramCollector をインポートできません: {e}")
         return []

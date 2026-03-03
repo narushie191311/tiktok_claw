@@ -27,9 +27,9 @@ def _has_display() -> bool:
     """
     return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
 
-from Iran_ocint.collectors.base import AbstractCollector, CollectedPost
-from Iran_ocint.utils.logger import get_logger
-from Iran_ocint.utils.rate_limiter import tiktok_limiter
+from collectors.base import AbstractCollector, CollectedPost
+from utils.logger import get_logger
+from utils.rate_limiter import tiktok_limiter
 
 log = get_logger(__name__)
 

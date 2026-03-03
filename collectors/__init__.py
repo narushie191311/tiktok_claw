@@ -8,12 +8,12 @@
     - InstagramCollector: instagrapi (非公式 API) による Instagram ハッシュタグ収集
 """
 
-from Iran_ocint.collectors.base import AbstractCollector, CollectedPost
-from Iran_ocint.collectors.instagram_collector import InstagramCollector
-from Iran_ocint.collectors.rss_collector import RSSCollector
-from Iran_ocint.collectors.tiktok_collector import TikTokCollector
-from Iran_ocint.collectors.twitter_api import TwitterAPICollector
-from Iran_ocint.collectors.twitter_scraper import TwitterScraperCollector
+from collectors.base import AbstractCollector, CollectedPost
+from collectors.instagram_collector import InstagramCollector
+from collectors.rss_collector import RSSCollector
+from collectors.tiktok_collector import TikTokCollector
+from collectors.twitter_api import TwitterAPICollector
+from collectors.twitter_scraper import TwitterScraperCollector
 
 __all__ = [
     "AbstractCollector",

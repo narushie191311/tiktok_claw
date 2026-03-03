@@ -9,9 +9,9 @@ from __future__ import annotations
 import os
 from datetime import datetime
 
-from Iran_ocint.collectors.base import AbstractCollector, CollectedPost
-from Iran_ocint.utils.logger import get_logger
-from Iran_ocint.utils.rate_limiter import twitter_scraper_limiter
+from collectors.base import AbstractCollector, CollectedPost
+from utils.logger import get_logger
+from utils.rate_limiter import twitter_scraper_limiter
 
 log = get_logger(__name__)
 

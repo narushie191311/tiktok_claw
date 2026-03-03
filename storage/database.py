@@ -20,8 +20,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from Iran_ocint.storage.models import AnalysisResult, Base, Report, Tweet
-from Iran_ocint.utils.logger import get_logger
+from storage.models import AnalysisResult, Base, Report, Tweet
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

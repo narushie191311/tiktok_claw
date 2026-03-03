@@ -33,14 +33,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-from Iran_ocint.collectors.base import CollectedPost
-from Iran_ocint.collectors.tiktok_japan_collector import (
+from collectors.base import CollectedPost
+from collectors.tiktok_japan_collector import (
     JP_ENTERTAINMENT_TAGS,
     JP_GENERAL_TAGS,
     JP_SHORT_DRAMA_TAGS,
     TikTokJapanCollector,
 )
-from Iran_ocint.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger("japan_trends")
 

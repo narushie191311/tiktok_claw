@@ -15,9 +15,9 @@ from dataclasses import dataclass
 import aiohttp
 import feedparser
 
-from Iran_ocint.collectors.base import AbstractCollector, CollectedPost
-from Iran_ocint.utils.logger import get_logger
-from Iran_ocint.utils.rate_limiter import rss_limiter
+from collectors.base import AbstractCollector, CollectedPost
+from utils.logger import get_logger
+from utils.rate_limiter import rss_limiter
 
 log = get_logger(__name__)
 

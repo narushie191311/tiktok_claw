@@ -9,25 +9,25 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 
-from Iran_ocint.analysis.classifier import ClassificationResult, classify_text
-from Iran_ocint.analysis.event_detector import (
+from analysis.classifier import ClassificationResult, classify_text
+from analysis.event_detector import (
     BreakingEvent,
     detect_spike,
     should_alert,
     triage_event,
 )
-from Iran_ocint.analysis.llm_client import BaseLLMClient
-from Iran_ocint.analysis.summarizer import GeneratedReport, ReportInput, generate_daily_report
-from Iran_ocint.analysis.translator import translate_text
-from Iran_ocint.collectors.base import CollectedPost
-from Iran_ocint.storage.database import (
+from analysis.llm_client import BaseLLMClient
+from analysis.summarizer import GeneratedReport, ReportInput, generate_daily_report
+from analysis.translator import translate_text
+from collectors.base import CollectedPost
+from storage.database import (
     get_hourly_counts,
     get_session,
     get_tweets_since,
     store_analysis,
     upsert_tweet,
 )
-from Iran_ocint.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -188,7 +188,7 @@ async def run_daily_report(
     # DB から分析結果を取得してトピック集計
     async with get_session() as session:
         from sqlalchemy import select
-        from Iran_ocint.storage.models import AnalysisResult
+        from storage.models import AnalysisResult
 
         for tweet in tweets:
             result = await session.execute(
@@ -225,7 +225,7 @@ async def run_daily_report(
     report = await generate_daily_report(llm, report_input)
 
     # レポートを DB に保存
-    from Iran_ocint.storage.database import store_report
+    from storage.database import store_report
 
     async with get_session() as session:
         await store_report(session, {

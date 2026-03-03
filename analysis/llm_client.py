@@ -11,8 +11,8 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from Iran_ocint.utils.logger import get_logger
-from Iran_ocint.utils.rate_limiter import llm_api_limiter
+from utils.logger import get_logger
+from utils.rate_limiter import llm_api_limiter
 
 log = get_logger(__name__)
 

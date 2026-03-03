@@ -10,9 +10,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from Iran_ocint.notifiers.base import AbstractNotifier
-from Iran_ocint.notifiers.report_formatter import markdown_to_html
-from Iran_ocint.utils.logger import get_logger
+from notifiers.base import AbstractNotifier
+from notifiers.report_formatter import markdown_to_html
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

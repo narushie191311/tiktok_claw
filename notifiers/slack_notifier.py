@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import os
 
-from Iran_ocint.notifiers.base import AbstractNotifier
-from Iran_ocint.utils.logger import get_logger
+from notifiers.base import AbstractNotifier
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

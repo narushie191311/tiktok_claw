@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 
-from Iran_ocint.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 
