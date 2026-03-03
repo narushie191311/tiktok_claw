@@ -18,6 +18,13 @@ on:
       slack_top:
         description: 'Slack 通知件数'
         default: '10'
+      lang:
+        description: '言語フィルター: ja=日本語のみ / all=全言語(非日本語に翻訳付き)'
+        default: 'ja'
+        type: choice
+        options:
+          - ja
+          - all
 
 jobs:
   collect:
@@ -48,7 +55,8 @@ jobs:
             --scrolls ${{ github.event.inputs.scrolls || '15' }} \
             --min-plays ${{ github.event.inputs.min_plays || '1000000' }} \
             --slack-top ${{ github.event.inputs.slack_top || '10' }} \
-            --analyze ${{ github.event.inputs.slack_top || '10' }}
+            --analyze ${{ github.event.inputs.slack_top || '10' }} \
+            --lang ${{ github.event.inputs.lang || 'ja' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

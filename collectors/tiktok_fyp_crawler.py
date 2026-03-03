@@ -69,6 +69,7 @@ class FYPVideo:
         play_count: 再生数.
         duration_sec: 動画の長さ (秒).
         cover_url: サムネイル画像 URL.
+        region_code: 投稿者の地域コード (例: "JP", "US"). API から取得。
         collected_at: 収集日時.
         ai_description: Gemini による AI 説明文.
         ai_tags: AI が推定したカテゴリタグ.
@@ -85,6 +86,7 @@ class FYPVideo:
     play_count: int = 0
     duration_sec: int = 0
     cover_url: str = ""
+    region_code: str = ""                      # API の author.region (例: "JP")
     posted_at: datetime | None = None          # 動画の投稿日時 (UTC)
     top_comment: dict = field(default_factory=dict)  # 最多いいねコメント {text, author, likes}
     collected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
@@ -96,7 +98,7 @@ class FYPVideo:
         """投稿日時を JST 文字列で返す.
 
         Returns:
-            "MM/DD HH:MM" 形式 (JST)。不明の場合は空文字列。
+            "YYYY/MM/DD HH:MM" 形式 (JST)。不明の場合は空文字列。
         """
         if not self.posted_at:
             return ""
@@ -106,9 +108,15 @@ class FYPVideo:
     def is_japanese(self) -> bool:
         """日本語コンテンツか判定する.
 
+        APIリージョン "JP" を最優先し、次にキャプションのひらがな/カタカナ/漢字で判定する。
+
         Returns:
-            ひらがな/カタカナ/漢字が含まれる場合 True.
+            日本語コンテンツと判定された場合 True.
         """
+        # API のリージョン情報を最優先 (最も信頼性が高い)
+        if self.region_code == "JP":
+            return True
+        # キャプションテキストで判定 (ひらがな・カタカナ・漢字)
         for char in self.description:
             cp = ord(char)
             if (
@@ -228,9 +236,9 @@ class TikTokFYPCrawler:
 
         log.info("fyp_crawl_started", scroll_count=scroll_count)
 
-        # TikTok トップページに移動
+        # TikTok トップページに移動 (lang=ja-JP で日本向けコンテンツを優先)
         await self._page.goto(
-            "https://www.tiktok.com/",
+            "https://www.tiktok.com/?lang=ja-JP",
             wait_until="domcontentloaded",
             timeout=30000,
         )
@@ -266,8 +274,13 @@ class TikTokFYPCrawler:
 
         all_videos = list({v.video_id: v for v in (dom_videos + api_videos)}.values())
 
-        # 日本語フィルタ (language="ja" の場合は日本語を先頭に)
+        jp_count = sum(1 for v in all_videos if v.is_japanese())
+
         if language == "ja":
+            # 日本語コンテンツのみに絞り込む
+            all_videos = [v for v in all_videos if v.is_japanese()]
+        else:
+            # "all": 日本語を先頭に、それ以外を後ろに並べる
             jp = [v for v in all_videos if v.is_japanese()]
             other = [v for v in all_videos if not v.is_japanese()]
             all_videos = jp + other
@@ -275,7 +288,8 @@ class TikTokFYPCrawler:
         log.info(
             "fyp_crawl_completed",
             total=len(all_videos),
-            japanese=sum(1 for v in all_videos if v.is_japanese()),
+            japanese=jp_count,
+            language_filter=language,
         )
         return all_videos
 
@@ -371,6 +385,13 @@ class TikTokFYPCrawler:
                 desc = item.get("desc", "") or ""
                 handle = author.get("uniqueId", "") or author.get("nickname", "")
 
+                # 地域コード: author.region が最も信頼性が高い
+                region_code = str(
+                    author.get("region", "")
+                    or item.get("regionCode", "")
+                    or ""
+                ).upper()
+
                 # サムネイル: originCover → dynamicCover → cover の順で優先
                 cover = (
                     video_meta.get("originCover")
@@ -394,6 +415,7 @@ class TikTokFYPCrawler:
                     play_count=int(stats.get("playCount", 0) or 0),
                     duration_sec=int(video_meta.get("duration", 0) or 0),
                     cover_url=cover,
+                    region_code=region_code,
                     posted_at=posted_at,
                     raw_data={"source": "api_intercept"},
                 ))
@@ -522,15 +544,18 @@ class VideoAnalyzer:
         """
         return bool(self._api_key)
 
-    async def analyze_video(self, url: str, extra_context: str = "") -> dict[str, Any]:
+    async def analyze_video(
+        self, url: str, extra_context: str = "", include_translation: bool = False
+    ) -> dict[str, Any]:
         """TikTok 動画をダウンロードして Gemini で分析する.
 
         Args:
             url: TikTok 動画 URL.
             extra_context: 既知の説明文・ハッシュタグなど追加コンテキスト.
+            include_translation: True の場合、キャプション・音声の日本語訳も生成する.
 
         Returns:
-            分析結果辞書 (description, category, trend_reason, tags, language).
+            分析結果辞書 (description, category, trend_reason, tags, language, translation?).
         """
         if not self.is_configured():
             return {"error": "GEMINI_API_KEY が設定されていません"}
@@ -540,7 +565,7 @@ class VideoAnalyzer:
             return {"error": "動画ダウンロード失敗"}
 
         try:
-            result = await self._call_gemini(video_path, url, extra_context)
+            result = await self._call_gemini(video_path, url, extra_context, include_translation)
             return result
         finally:
             # 一時ファイル削除
@@ -593,7 +618,8 @@ class VideoAnalyzer:
             return None
 
     async def _call_gemini(
-        self, video_path: Path, url: str, extra_context: str
+        self, video_path: Path, url: str, extra_context: str,
+        include_translation: bool = False,
     ) -> dict[str, Any]:
         """Gemini API に動画を送信して分析する.
 
@@ -603,6 +629,7 @@ class VideoAnalyzer:
             video_path: 動画ファイルパス.
             url: 元の TikTok URL.
             extra_context: ハッシュタグ・キャプションなどの追加コンテキスト.
+            include_translation: True の場合、キャプション・音声の日本語訳も生成する.
 
         Returns:
             分析結果辞書.
@@ -616,6 +643,12 @@ class VideoAnalyzer:
 
         client = genai.Client(api_key=self._api_key)
 
+        # 翻訳フィールドは非日本語コンテンツの場合のみ要求
+        translation_field = (
+            '  "translation": "キャプション・音声・テキストの日本語訳 (元が日本語の場合は null)",'
+            if include_translation else ""
+        )
+
         prompt = f"""この TikTok 動画を日本語で分析してください。
 
 元のキャプション/ハッシュタグ: {extra_context or '(なし)'}
@@ -628,7 +661,7 @@ URL: {url}
   "trend_reason": "なぜバズっているか・トレンドになっている理由の推測",
   "tags": ["提案するハッシュタグ (日本語) を5個まで"],
   "language": "動画内で主に使われている言語",
-  "emotion": "視聴者が感じる主な感情 (例: 感動, 笑い, 驚き, 共感)"
+  "emotion": "視聴者が感じる主な感情 (例: 感動, 笑い, 驚き, 共感)",{translation_field}
 }}"""
 
         loop = asyncio.get_event_loop()

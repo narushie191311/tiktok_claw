@@ -137,6 +137,10 @@ def _build_video_block(
     # AI 分析セクション (説明・タグを太字、絵文字なし、モデル名なし)
     if ai_result and "error" not in ai_result:
         ai_lines = []
+        # 非日本語コンテンツの日本語訳を最上部に表示
+        translation = ai_result.get("translation")
+        if translation and translation not in (None, "null", "NULL"):
+            ai_lines.append(f"*日本語訳:* {str(translation)[:200]}")
         desc_val = ai_result.get("visual_description") or ai_result.get("description", "")
         if desc_val:
             ai_lines.append(f"*説明:* {desc_val[:200]}")
@@ -162,6 +166,20 @@ def _build_video_block(
                     }
                 ],
             })
+
+    # TikTokで開くリンクボタン (動画URLが有効な場合のみ)
+    if video.url and "tiktok.com" in video.url:
+        blocks.append({
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "TikTokで開く"},
+                    "url": video.url,
+                    "style": "primary",
+                }
+            ],
+        })
 
     blocks.append({"type": "divider"})
     return blocks

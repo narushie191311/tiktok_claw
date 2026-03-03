@@ -172,8 +172,9 @@ async def run(args: argparse.Namespace) -> None:
     # AI 分析件数: 明示指定がなければ --slack-top に合わせる
     analyze_count = args.analyze if args.analyze >= 0 else args.slack_top
 
+    lang_label = "日本語のみ" if args.lang == "ja" else "全言語 (日本語優先・他は翻訳付き)"
     print("\n🇯🇵 TikTok FYP ブラウザー")
-    print(f"   スクロール回数: {args.scrolls}回 | 日本語設定: ON")
+    print(f"   スクロール回数: {args.scrolls}回 | 言語フィルター: {lang_label}")
     if args.min_plays > 0:
         print(f"   再生数フィルター: {args.min_plays/10000:.0f}万再生以上のみ")
     has_key = bool(os.environ.get("GEMINI_API_KEY"))
@@ -197,7 +198,7 @@ async def run(args: argparse.Namespace) -> None:
 
         videos = await crawler.crawl_fyp(
             scroll_count=args.scrolls,
-            language="ja",
+            language=args.lang,
             wait_between=args.wait,
         )
 
@@ -214,10 +215,10 @@ async def run(args: argparse.Namespace) -> None:
                 print("   該当動画なし (0件)")
                 sys.exit(0)
 
-        # 日本語優先でソート
+        # language="ja" 時はすでに日本語のみ、"all" 時は日本語優先ソート済み
         jp_videos = [v for v in videos if v.is_japanese()]
         other_videos = [v for v in videos if not v.is_japanese()]
-        sorted_videos = jp_videos + other_videos
+        sorted_videos = videos  # crawl_fyp 内でソート済み
 
         # ブラウザを使って上位N件のコメントを取得 (ブラウザが開いている間に実行)
         top_n = args.slack_top
@@ -250,8 +251,15 @@ async def run(args: argparse.Namespace) -> None:
         targets = sorted_videos[:analyze_count]
         print(f"\n🤖 Gemini AI 分析中 (上位 {len(targets)} 件)...")
         for i, v in enumerate(targets, 1):
-            print(f"   [{i}/{len(targets)}] 分析中: @{v.author_handle} ({v.url[-38:]})")
-            result = await analyzer.analyze_video(v.url, extra_context=v.description)
+            # 全言語モードで非日本語コンテンツには翻訳も要求する
+            need_translation = args.lang == "all" and not v.is_japanese()
+            print(f"   [{i}/{len(targets)}] 分析中: @{v.author_handle} ({v.url[-38:]})"
+                  + (" [翻訳あり]" if need_translation else ""))
+            result = await analyzer.analyze_video(
+                v.url,
+                extra_context=v.description,
+                include_translation=need_translation,
+            )
             ai_results[v.video_id] = result
             await asyncio.sleep(2)
         print()
@@ -340,6 +348,13 @@ if __name__ == "__main__":
         default=10,
         metavar="N",
         help="Slack に送信する上位件数 / コメント・AI分析の対象件数 (default: 10)",
+    )
+    parser.add_argument(
+        "--lang",
+        type=str,
+        default="ja",
+        choices=["ja", "all"],
+        help="言語フィルター: 'ja'=日本語のみ(default) / 'all'=全言語(非日本語には日本語訳付き)",
     )
     parser.add_argument(
         "--min-plays",
